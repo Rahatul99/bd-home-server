@@ -33,7 +33,8 @@ async function run() {
 
     app.post("/addNew", async (req, res) => {
       const addNew = req.body;
-      console.log(addNew);
+      const result = await newsCollection.insertOne(addNew);
+      res.send(result);
     });
 
     await client.db("admin").command({ ping: 1 });
