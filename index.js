@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 
 const app = express();
@@ -35,6 +35,50 @@ async function run() {
       const addNew = req.body;
       const result = await newsCollection.insertOne(addNew);
       res.send(result);
+    });
+
+    app.put("/updateNews/:id", async (req, res) => {
+      console.log(req.params.id, "hit");
+      const id = req.params.id;
+      const body = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          name: body.name,
+          category: body.category,
+          link: body.link,
+        },
+      };
+
+      try {
+        const result = await newsCollection.updateOne(filter, updateDoc);
+        if (result.modifiedCount > 0) {
+          const updateNews = await newsCollection.findOne(filter);
+          res.send(updateNews);
+          console.log(updateNews);
+        } else {
+          res.status(404).send("News not found");
+        }
+      } catch (error) {
+        console.error("Error updating news:", error);
+        res.status(500).send("An error occurred");
+      }
+    });
+
+    app.delete("/deleteNews/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      try {
+        const result = await newsCollection.deleteOne(filter);
+        if (result.deletedCount > 0) {
+          res.send({ message: "News deleted successfully" });
+        } else {
+          res.status(404).send({ message: "News not found" });
+        }
+      } catch (error) {
+        console.error("Error deleting news:", error);
+        res.status(500).send({ message: "An error occurred" });
+      }
     });
 
     await client.db("admin").command({ ping: 1 });
